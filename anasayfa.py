@@ -10,6 +10,8 @@ import random
 
 
 import sys
+
+from PyQt5.QtWidgets import QMessageBox
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -161,27 +163,41 @@ class Ui_MainWindow(object): #Ahmet
             self.canvas.axes.plot(X_, Y_)
             self.canvas.draw()
 
+    def showDialog(self):
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Information)
+        msgBox.setText("Please enter valid values.")
+        msgBox.setWindowTitle("Warning!!!!")
+        msgBox.setStandardButtons(QMessageBox.Ok)
+
+        returnValue = msgBox.exec()
+        if returnValue == QMessageBox.Ok:
+            print('OK clicked')
+
     def generate_eqn(self): #Berke
-        self.canvas.axes.clear()
-        self.is_generated=True
-        requested_x_values = self.lineXValues.text()
-        requested_y_values = self.lineYValues.text()
-        requested_degree = int(self.lineDegree.text())
+        if self.lineXValues.text()=="" or self.lineYValues.text()=="" or self.lineDegree.text()=="":
+            self.showDialog()
+        else:
+            self.canvas.axes.clear()
+            self.is_generated=True
+            requested_x_values = self.lineXValues.text()
+            requested_y_values = self.lineYValues.text()
+            requested_degree = int(self.lineDegree.text())
 
-        x_val_temp = requested_x_values.split(',')
-        y_val_temp = requested_y_values.split(',')
+            x_val_temp = requested_x_values.split(',')
+            y_val_temp = requested_y_values.split(',')
 
-        for i in range(len(x_val_temp)):
-            self.xvalues.append(int(x_val_temp[i]))
-            self.yvalues.append(int(y_val_temp[i]))
+            for i in range(len(x_val_temp)):
+                self.xvalues.append(int(x_val_temp[i]))
+                self.yvalues.append(int(y_val_temp[i]))
 
-        self.poly = Polynomial.fit(self.xvalues,self.yvalues,requested_degree) #To make polynomial function
-        self.lineEquation.setText(self.poly.__str__())
-        self.lineEquation.setEnabled(False)
-        self.labelProcess.setText(f"Generated equation: {self.poly.__str__()}")
-        self.__show_plot()
-        self.xvalues = []
-        self.yvalues = []
+            self.poly = Polynomial.fit(self.xvalues,self.yvalues,requested_degree) #To make polynomial function
+            self.lineEquation.setText(self.poly.__str__())
+            self.lineEquation.setEnabled(False)
+            self.labelProcess.setText(f"Generated equation: {self.poly.__str__()}")
+            self.__show_plot()
+            self.xvalues = []
+            self.yvalues = []
 
     def reset_eqn(self): #Simay
         self.lineEquation.setText("")
@@ -192,49 +208,53 @@ class Ui_MainWindow(object): #Ahmet
         self.lineDegree.setText("")
         self.canvas.axes.clear()
 
-    def bisection(self): #Haktan
-        self.canvas.axes.clear()
-        #show plot first
+    def fill_lists(self):
         i = -10
-        j=0
-        while i<=10: #It has to fill
+        j = 0
+        while i <= 10:  # It has to fill
             self.xvalues.append(i)
             self.yvalues.append(self.f(self.xvalues[j]))
             i += 1
             j += 1
 
-        m_list=[]
-        f_m_list=[]
-        # bisection part
-        a = int(self.lineX1.text())
-        b = int(self.lineX2.text())
-        f_a = self.f(a)
-        f_b = self.f(b)
-        if f_a * f_b > 0: #different aproach for rule no:1
-            self.labelProcess.setText("Progress: Bisection Fails")
+    def bisection(self):
+        if self.lineX1.text()=="" or self.lineX2.text()=="" or self.lineEquation.text()=="":
+            self.showDialog()
         else:
-            eps = 1E-6
-            i = 0  # iteration counter
-            while b - a > eps:
-                self.labelProcess.setText("")
-                i += 1
-                m = (a + b) / 2.0
-                f_m = self.f(m)
-                m_list.append(m)
-                f_m_list.append(f_m)
-                if f_a * f_m <= 0:
-                    b = m  # root is in left  half of [a,b]
-                elif f_b * f_m < 0:
-                    a = m  # root is in right half of [a,b]
-                    f_a = f_m
-                else:
-                    self.labelProcess.setText("Bisection Fails at "+str(i)+". process")
-                    break
-                self.labelProcess.setText(f"Step: {i} , f(a)={f_a} ,f(b)={f_b},b-a={b - a}")
-        self.__show_plot()
-        self.canvas.axes.plot(m_list,f_m_list,'.')
-        self.canvas.draw()
-        self.is_generated=False
+            self.canvas.axes.clear()
+            m_list=[]
+            f_m_list=[]
+            # bisection part
+            a = int(self.lineX1.text())
+            b = int(self.lineX2.text())
+            f_a = self.f(a)
+            f_b = self.f(b)
+            if f_a * f_b > 0: #different aproach for rule no:1
+                self.labelProcess.setText("Progress: Bisection Fails")
+            else:
+                eps = 1E-6
+                i = 0  # iteration counter
+                while b - a > eps:
+                    self.labelProcess.setText("")
+                    i += 1
+                    m = (a + b) / 2.0
+                    f_m = self.f(m)
+                    m_list.append(m)
+                    f_m_list.append(f_m)
+                    if f_a * f_m <= 0:
+                        b = m  # root is in left  half of [a,b]
+                    elif f_b * f_m < 0:
+                        a = m  # root is in right half of [a,b]
+                        f_a = f_m
+                    else:
+                        self.labelProcess.setText("Bisection Fails at "+str(i)+". process")
+                        break
+                    self.labelProcess.setText(f"Step: {i} , f(a)={f_a} ,f(b)={f_b},b-a={b - a}")
+            self.fill_lists()
+            self.__show_plot()
+            self.canvas.axes.plot(m_list,f_m_list,'.')
+            self.canvas.draw()
+            self.is_generated=False
 
 
     def bisection_reset(self):
